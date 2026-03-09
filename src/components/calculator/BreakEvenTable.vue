@@ -71,29 +71,29 @@ const filteredEntries = computed(() => {
 
       <!-- Table -->
       <div class="border border-dark-border rounded-md overflow-hidden">
-        <div class="overflow-y-auto max-h-[500px]">
+        <div class="overflow-y-auto h-[400px]">
           <table class="w-full text-xs">
-            <thead class="bg-dark-hover border-b border-dark-border sticky top-0">
-              <tr>
-                <th class="px-3 py-1.5 text-left font-semibold text-gray-200">Quality</th>
-                <th class="px-3 py-1.5 text-right font-semibold text-gray-200">Max Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="entry in filteredEntries"
-                :key="entry.quality"
-                class="border-b border-dark-border hover:bg-dark-hover transition-colors"
-              >
-                <td class="px-3 py-1.5 font-semibold text-gray-200">
-                  {{ entry.quality }}%
-                </td>
-                <td class="px-3 py-1.5 text-right font-medium text-gray-300">
-                  {{ formatNumber(entry.maxPrice) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <thead class="bg-dark-hover border-b border-dark-border">
+            <tr>
+              <th class="px-3 py-1.5 text-left font-semibold text-gray-200">Quality</th>
+              <th class="px-3 py-1.5 text-right font-semibold text-gray-200">Max Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="entry in filteredEntries"
+              :key="entry.quality"
+              class="border-b border-dark-border hover:bg-dark-hover transition-colors"
+            >
+              <td class="px-3 py-1.5 font-semibold text-gray-200">
+                {{ entry.quality }}%
+              </td>
+              <td class="px-3 py-1.5 text-right font-medium text-gray-300">
+                {{ formatNumber(entry.maxPrice) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
         </div>
       </div>
 

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { gsap } from 'gsap'
 import Card from '@/components/ui/Card.vue'
 import Input from '@/components/ui/Input.vue'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
+import InfoTooltip from '@/components/ui/InfoTooltip.vue'
 import BreakEvenTable from './BreakEvenTable.vue'
 import type { MarketOffer, PartType, EquipmentQuality } from '@/types/calculator'
 import { getQualityRangeForPartType } from '@/data/series'
@@ -22,6 +24,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   'add-offer': [offer: MarketOffer]
   'remove-offer': [id: string]
+  'clear-all-offers': []
 }>()
 
 // Form state
@@ -69,6 +72,12 @@ function handleRemove(id: string) {
   emit('remove-offer', id)
 }
 
+function handleClearAll() {
+  if (confirm('Remove all market offers?')) {
+    emit('clear-all-offers')
+  }
+}
+
 function getDisassembly(offerQuality: number): number {
   const equipment = EQUIPMENT_DATA.find(eq => eq.quality === offerQuality)
   return equipment?.disassembly || 0
@@ -107,6 +116,38 @@ onMounted(() => {
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
 })
+
+// GSAP animation hooks
+function onBeforeEnter(el: Element) {
+  gsap.set(el, {
+    opacity: 0,
+    y: -10
+  })
+}
+
+function onEnter(el: Element, done: () => void) {
+  const index = (el as HTMLElement).dataset.index ? parseInt((el as HTMLElement).dataset.index!) : 0
+  gsap.to(el, {
+    opacity: 1,
+    y: 0,
+    duration: 0.3,
+    delay: index * 0.03,
+    ease: 'power2.out',
+    onComplete: done
+  })
+}
+
+function onLeave(el: Element, done: () => void) {
+  const index = (el as HTMLElement).dataset.index ? parseInt((el as HTMLElement).dataset.index!) : 0
+  gsap.to(el, {
+    opacity: 0,
+    y: 10,
+    duration: 0.2,
+    delay: index * 0.02,
+    ease: 'power2.in',
+    onComplete: done
+  })
+}
 </script>
 
 <template>
@@ -153,14 +194,9 @@ onUnmounted(() => {
             v-model="link"
             type="text"
             label="Trade Link (optional)"
-            placeholder="https://minesweeper.online/trade/4095913"
+            placeholder="https://minesweeper.online/trade/XXXXXXX"
             hint="Optional link to the trade offer"
           />
-        </div>
-
-        <!-- Disassembly Preview -->
-        <div v-if="selectedDisassembly" class="mt-3 text-sm text-gray-400">
-          Will yield <span class="text-blue-400 font-medium">{{ selectedDisassembly }} parts</span> when disassembled
         </div>
 
         <!-- Add Button -->
@@ -176,71 +212,91 @@ onUnmounted(() => {
       </div>
 
       <!-- Offers List -->
-      <div v-if="marketOffers.length > 0" class="space-y-3" :key="forceUpdate">
-        <h3 class="text-sm font-semibold text-gray-200">
-          Current Offers ({{ marketOffers.length }})
-        </h3>
-        <div class="space-y-2">
-          <div
-            v-for="offer in marketOffers"
-            :key="offer.id"
-            class="
-              flex items-center justify-between
-              p-3 rounded-lg border border-dark-border
-              bg-dark-card hover:bg-dark-hover transition-colors
-            "
-          >
-            <div class="flex items-center gap-3 flex-1">
-              <Badge variant="info">Market</Badge>
-              <div class="text-sm flex-1">
-                <span class="font-semibold text-gray-200">{{ offer.quality }}%</span>
-                <span class="text-gray-400 mx-2">•</span>
-                <span class="text-gray-300">{{ offer.price.toLocaleString() }} MC</span>
-                <span class="text-gray-400 mx-2">•</span>
-                <span class="text-blue-400">{{ getDisassembly(offer.quality) }} parts</span>
-                <template v-if="offer.link">
-                  <span class="text-gray-400 mx-2">•</span>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-semibold text-gray-200">
+              Current Offers ({{ marketOffers.length }})
+            </h3>
+            <InfoTooltip text="Market offers expire after 15 minutes. The timer shows remaining time before automatic removal." />
+          </div>
+          <Button v-if="marketOffers.length > 0" variant="danger" size="sm" @click="handleClearAll">
+            Clear All
+          </Button>
+        </div>
+
+        <!-- Offers Grid (styled as table) -->
+        <div class="border border-dark-border rounded-md overflow-hidden">
+          <!-- Header -->
+          <div v-if="marketOffers.length > 0" class="grid grid-cols-[1.2fr_1fr_0.8fr_2fr_1.5fr_1.3fr] bg-dark-hover border-b border-dark-border text-sm">
+            <div class="px-2 py-2 text-left font-semibold text-gray-200">Source</div>
+            <div class="px-2 py-2 text-center font-semibold text-gray-200">Quality</div>
+            <div class="px-2 py-2 text-right font-semibold text-gray-200">Parts</div>
+            <div class="px-2 py-2 text-right font-semibold text-gray-200">Price</div>
+            <div class="px-2 py-2 text-center font-semibold text-gray-200">Link</div>
+            <div class="px-2 py-2 text-center font-semibold text-gray-200">Action</div>
+          </div>
+
+          <!-- Data Rows (Scrollable) -->
+          <div class="overflow-y-auto h-[300px]">
+            <!-- Empty State -->
+            <div v-if="marketOffers.length === 0" class="flex items-center justify-center h-full text-gray-400">
+              <div class="text-center">
+                <p class="text-sm">No market offers added yet</p>
+                <p class="text-xs mt-1">Add offers to compare them with workshop crafting</p>
+              </div>
+            </div>
+              <TransitionGroup
+                tag="div"
+                @before-enter="onBeforeEnter"
+                @enter="onEnter"
+                @leave="onLeave"
+                :css="false"
+              >
+              <div
+                v-for="(offer, index) in marketOffers"
+                :key="offer.id"
+                :data-index="index"
+                class="grid grid-cols-[1.2fr_1fr_0.8fr_2fr_1.5fr_1.3fr] border-b border-dark-border hover:bg-dark-hover transition-colors text-sm"
+              >
+                <div class="px-2 py-2">
+                  <Badge variant="info">Market</Badge>
+                </div>
+                <div class="px-2 py-2 text-center font-semibold text-gray-200">
+                  {{ offer.quality }}%
+                </div>
+                <div class="px-2 py-2 text-right text-blue-400">
+                  {{ getDisassembly(offer.quality) }}
+                </div>
+                <div class="px-2 py-2 text-right text-gray-300">
+                  {{ offer.price.toLocaleString() }} MC
+                </div>
+                <div class="px-2 py-2 text-center">
                   <a
+                    v-if="offer.link"
                     :href="offer.link"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="text-blue-400 hover:text-blue-300 underline"
                   >
-                    View Trade
+                    View
                   </a>
-                </template>
-                <span class="text-gray-400 mx-2">•</span>
-                <span
-                  class="text-xs"
-                  :class="isExpiringSoon(offer.timestamp) ? 'text-red-400 font-medium' : 'text-gray-500'"
-                >
-                  {{ getTimeRemaining(offer.timestamp) }}
-                </span>
+                  <span v-else class="text-gray-500">-</span>
+                </div>
+                <div class="px-2 py-2 text-center">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    @click="handleRemove(offer.id)"
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              @click="handleRemove(offer.id)"
-            >
-              Remove
-            </Button>
+            </TransitionGroup>
           </div>
         </div>
       </div>
-
-      <!-- Empty State -->
-      <div
-        v-else
-        class="
-          text-center py-8 px-4
-          border border-dashed border-dark-border rounded-lg
-          text-gray-400
-        "
-      >
-        <p class="text-sm">No market offers added yet</p>
-        <p class="text-xs mt-1">Add offers to compare them with workshop crafting</p>
-        </div>
         </div>
       </Card>
       </div>

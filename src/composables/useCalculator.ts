@@ -239,6 +239,10 @@ export function useCalculator() {
     marketOffers.value = marketOffers.value.filter(offer => offer.id !== id)
   }
 
+  function clearAllMarketOffers() {
+    marketOffers.value = []
+  }
+
   return {
     currentStep,
     partTypeSelection,
@@ -251,6 +255,7 @@ export function useCalculator() {
     allOptions,
     addMarketOffer,
     removeMarketOffer,
+    clearAllMarketOffers,
     handleClearData,
     goToStep,
     nextStep,

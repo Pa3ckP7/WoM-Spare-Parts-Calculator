@@ -2,6 +2,7 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import Input from '@/components/ui/Input.vue'
 import Card from '@/components/ui/Card.vue'
+import InfoTooltip from '@/components/ui/InfoTooltip.vue'
 import { SERIES, type Series } from '@/data/series'
 import type { UserPrices, GemPrices, MetalPrices, PartType } from '@/types/calculator'
 
@@ -151,37 +152,55 @@ watch(() => props.prices, async (newPrices) => {
           />
           <div
             class="
-              w-5 h-5 rounded border-2 transition-all
-              peer-checked:bg-blue-600 peer-checked:border-blue-600
+              w-5 h-5 rounded border-2 transition-all duration-200
+              peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:scale-105
               peer-focus:ring-2 peer-focus:ring-blue-500 peer-focus:ring-offset-2 peer-focus:ring-offset-dark-bg
               border-dark-border bg-dark-card
               flex items-center justify-center
             "
           >
-            <svg
-              v-if="workshopEnabled"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="3"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="w-3.5 h-3.5 text-white"
+            <Transition
+              enter-active-class="transition-all duration-200"
+              enter-from-class="scale-0 rotate-180"
+              enter-to-class="scale-100 rotate-0"
+              leave-active-class="transition-all duration-150"
+              leave-from-class="scale-100 rotate-0"
+              leave-to-class="scale-0 rotate-180"
             >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+              <svg
+                v-if="workshopEnabled"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-3.5 h-3.5 text-white"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </Transition>
           </div>
         </div>
         <span class="text-sm font-medium text-gray-200 group-hover:text-gray-100">
           Include workshop crafting
         </span>
+        <InfoTooltip text="When enabled, calculates costs for crafting equipment in the workshop and disassembling it for parts. Disable if you only want to track market offers." />
       </label>
 
       <!-- Workshop Prices (conditional) -->
-      <template v-if="workshopEnabled">
-        <!-- Perfect Parts: Single gem/metal -->
-        <div v-if="isPerfectType && currentSeries" class="space-y-4">
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 max-h-0"
+        enter-to-class="opacity-100 max-h-[2000px]"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 max-h-[2000px]"
+        leave-to-class="opacity-0 max-h-0"
+      >
+        <div v-if="workshopEnabled" class="overflow-hidden">
+          <!-- Perfect Parts: Single gem/metal -->
+          <div v-if="isPerfectType && currentSeries" class="space-y-4">
           <Input
             v-model="currentGemPrice"
             type="number"
@@ -236,7 +255,8 @@ watch(() => props.prices, async (newPrices) => {
             </div>
           </div>
         </div>
-      </template>
+        </div>
+      </Transition>
     </div>
   </Card>
 </template>

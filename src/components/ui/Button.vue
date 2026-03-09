@@ -20,8 +20,9 @@ withDefaults(defineProps<Props>(), {
     :disabled="disabled"
     class="
       inline-flex items-center justify-center rounded-md font-medium
-      transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg
+      transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg
       disabled:opacity-50 disabled:cursor-not-allowed
+      active:scale-95 hover:shadow-lg
     "
     :class="[
       // Size
