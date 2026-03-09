@@ -236,3 +236,72 @@ export function formatNumber(num: number): string {
   const rounded = Math.round(num)
   return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 }
+
+/**
+ * Calculate cost analysis for a market offer
+ *
+ * @param quality - Equipment quality level
+ * @param price - Market price for the equipment
+ * @param partPrice - Current market price for spare parts
+ * @param equipmentData - Equipment data to look up disassembly yield
+ * @returns Market calculation with cost breakdown, or null if quality not found
+ */
+export function calculateMarketOffer(
+  quality: number,
+  price: number,
+  partPrice: number,
+  equipmentData: EquipmentQuality[]
+): WorkshopCalculation | null {
+  // Find equipment data for this quality
+  const equipment = equipmentData.find(eq => eq.quality === quality)
+  if (!equipment) return null
+
+  const totalCost = price
+  const costPerPart = price / equipment.disassembly
+  const directCost = equipment.disassembly * partPrice
+  const totalSavings = directCost - totalCost
+  const savingsPerPart = partPrice - costPerPart
+  const percentOfDirect = (costPerPart / partPrice) * 100
+
+  return {
+    quality: equipment.quality,
+    seriesId: undefined, // Market offers don't have series
+    seriesName: undefined,
+    minecoinsCost: price, // Store market price here
+    gemsCost: 0,
+    metalCost: 0,
+    totalCost,
+    disassembly: equipment.disassembly,
+    costPerPart,
+    savingsPerPart,
+    totalSavings,
+    percentOfDirect,
+  }
+}
+
+/**
+ * Merge and sort workshop options and market offers together
+ *
+ * @param workshopOptions - Array of workshop calculations
+ * @param marketOffers - Array of market offer data
+ * @param partPrice - Current market price for spare parts
+ * @param equipmentData - Equipment data for looking up disassembly yields
+ * @returns Combined and sorted array
+ */
+export function mergeAndSortOptions(
+  workshopOptions: WorkshopCalculation[],
+  marketOffers: Array<{ id: string; quality: number; price: number }>,
+  partPrice: number,
+  equipmentData: EquipmentQuality[]
+): WorkshopCalculation[] {
+  // Calculate market offer options
+  const marketCalculations = marketOffers
+    .map(offer => calculateMarketOffer(offer.quality, offer.price, partPrice, equipmentData))
+    .filter((calc): calc is WorkshopCalculation => calc !== null)
+
+  // Combine both arrays
+  const combined = [...workshopOptions, ...marketCalculations]
+
+  // Sort using existing sort function
+  return sortWorkshopOptions(combined)
+}

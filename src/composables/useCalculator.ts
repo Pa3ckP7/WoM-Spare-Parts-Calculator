@@ -1,12 +1,13 @@
 import { ref, computed, watch } from 'vue'
 import { EQUIPMENT_DATA } from '@/data/equipment'
 import { getQualityRangeForPartType } from '@/data/series'
-import type { UserPrices, PartType, GemPrices, MetalPrices } from '@/types/calculator'
+import type { UserPrices, PartType, GemPrices, MetalPrices, MarketOffer } from '@/types/calculator'
 import {
   calculateAllSeriesOptions,
   calculateSingleSeriesOptions,
   sortWorkshopOptions,
   filterByBudget,
+  mergeAndSortOptions,
   type WorkshopCalculation,
 } from '@/utils/calculations'
 import { useLocalStorage } from '@/composables/useLocalStorage'
@@ -20,9 +21,24 @@ export function useCalculator() {
   // Load initial state
   const initialState = loadState()
 
+  // Constants
+  const OFFER_EXPIRY_MS = 15 * 60 * 1000 // 15 minutes
+
+  // Helper to filter expired offers
+  function filterExpiredOffers(offers: MarketOffer[]): MarketOffer[] {
+    const now = Date.now()
+    return offers.filter(offer => (now - offer.timestamp) < OFFER_EXPIRY_MS)
+  }
+
   // State
   const currentStep = ref(1)
   const partTypeSelection = ref(initialState.partType || '')
+
+  // Load market offers for current part type (and filter expired)
+  const initialOffers = initialState.partType && initialState.partTypeMarketOffers?.[initialState.partType]
+    ? filterExpiredOffers(initialState.partTypeMarketOffers[initialState.partType])
+    : []
+  const marketOffers = ref<MarketOffer[]>(initialOffers)
 
   // Initialize part price from saved prices for current part type
   const initialPartPrice = initialState.partType && initialState.partPrices?.[initialState.partType] || 0
@@ -37,7 +53,7 @@ export function useCalculator() {
 
   // Auto-save state changes with debounce
   let saveTimeout: ReturnType<typeof setTimeout> | null = null
-  watch([partTypeSelection, prices], () => {
+  watch([partTypeSelection, prices, marketOffers], () => {
     if (saveTimeout) clearTimeout(saveTimeout)
     saveTimeout = setTimeout(() => {
       // Get existing partPrices or create new object
@@ -48,6 +64,20 @@ export function useCalculator() {
         partPrices[partTypeSelection.value] = prices.value.partPrice
       }
 
+      // Get existing partTypeMarketOffers or create new object
+      const partTypeMarketOffers = savedState.value.partTypeMarketOffers || {}
+
+      // Update the offers for current part type (filter expired before saving)
+      if (partTypeSelection.value) {
+        const nonExpiredOffers = filterExpiredOffers(marketOffers.value)
+        if (nonExpiredOffers.length > 0) {
+          partTypeMarketOffers[partTypeSelection.value] = nonExpiredOffers
+        } else {
+          // Remove empty arrays
+          delete partTypeMarketOffers[partTypeSelection.value]
+        }
+      }
+
       savedState.value = {
         ...savedState.value,
         partType: partTypeSelection.value,
@@ -56,17 +86,29 @@ export function useCalculator() {
         workshopEnabled: prices.value.workshopEnabled,
         gemPrices: prices.value.gemPrices,
         metalPrices: prices.value.metalPrices,
+        partTypeMarketOffers,
       }
       saveState(savedState.value)
     }, 500)
   }, { deep: true })
 
-  // Watch for part type changes and load the appropriate price
-  watch(partTypeSelection, (newPartType) => {
+  // Watch for part type changes and load the appropriate price and offers
+  watch(partTypeSelection, (newPartType, oldPartType) => {
+    if (oldPartType && newPartType === oldPartType) return
+
+    // Load saved price for new part type
     if (newPartType && savedState.value.partPrices?.[newPartType] !== undefined) {
       prices.value.partPrice = savedState.value.partPrices[newPartType]
     } else {
       prices.value.partPrice = 0
+    }
+
+    // Load saved market offers for new part type (and filter expired)
+    if (newPartType && savedState.value.partTypeMarketOffers?.[newPartType]) {
+      const offers = savedState.value.partTypeMarketOffers[newPartType]
+      marketOffers.value = filterExpiredOffers(offers)
+    } else {
+      marketOffers.value = []
     }
   })
 
@@ -94,7 +136,7 @@ export function useCalculator() {
     return EQUIPMENT_DATA.filter(eq => eq.quality >= range.min && eq.quality <= range.max)
   })
 
-  // Calculate workshop options
+  // Calculate workshop options (without market offers)
   const workshopOptions = computed((): WorkshopCalculation[] => {
     if (!partType.value || !prices.value.partPrice) return []
 
@@ -147,11 +189,28 @@ export function useCalculator() {
     return sortWorkshopOptions(options)
   })
 
+  // All options (workshop + market offers merged and sorted)
+  const allOptions = computed((): WorkshopCalculation[] => {
+    if (!partType.value || !prices.value.partPrice) return []
+
+    // Merge workshop options with market offers
+    const merged = mergeAndSortOptions(
+      workshopOptions.value,
+      marketOffers.value,
+      prices.value.partPrice,
+      filteredEquipment.value
+    )
+
+    // Filter by budget
+    return filterByBudget(merged, prices.value.budgetCap)
+  })
+
   function handleClearData() {
     if (confirm('Clear all saved data? This cannot be undone.')) {
       clearState()
       partTypeSelection.value = ''
       prices.value = { partPrice: 0 }
+      marketOffers.value = []
       currentStep.value = 1
     }
   }
@@ -161,7 +220,7 @@ export function useCalculator() {
   }
 
   function nextStep() {
-    if (currentStep.value < 3) {
+    if (currentStep.value < 4) {
       currentStep.value++
     }
   }
@@ -172,6 +231,14 @@ export function useCalculator() {
     }
   }
 
+  function addMarketOffer(offer: MarketOffer) {
+    marketOffers.value.push(offer)
+  }
+
+  function removeMarketOffer(id: string) {
+    marketOffers.value = marketOffers.value.filter(offer => offer.id !== id)
+  }
+
   return {
     currentStep,
     partTypeSelection,
@@ -180,6 +247,10 @@ export function useCalculator() {
     seriesId,
     filteredEquipment,
     workshopOptions,
+    marketOffers,
+    allOptions,
+    addMarketOffer,
+    removeMarketOffer,
     handleClearData,
     goToStep,
     nextStep,

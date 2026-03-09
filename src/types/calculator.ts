@@ -58,39 +58,8 @@ export interface MarketOffer {
   id: string
   quality: number
   price: number
-}
-
-// Calculated workshop option
-export interface WorkshopOption {
-  quality: number
-  minecoinsCost: number
-  gemsCost: number
-  metalCost: number
-  totalCost: number
-  disassembly: number
-  costPerPart: number
-  savingsPerPart: number
-}
-
-// Calculated market offer option
-export interface MarketOfferOption {
-  id: string
-  quality: number
-  price: number
-  disassembly: number
-  costPerPart: number
-  savingsPerPart: number
-}
-
-// Unified option type for ranking
-export interface RankedOption {
-  type: 'workshop' | 'market-offer' | 'direct-purchase'
-  quality: number | null
-  costPerPart: number
-  totalCost: number
-  partsGained: number
-  savingsPerPart: number
-  details: WorkshopOption | MarketOfferOption | null
+  timestamp: number // When the offer was added
+  link?: string // Optional link to trade (e.g., https://minesweeper.online/trade/4095913)
 }
 
 // Break-even price entry

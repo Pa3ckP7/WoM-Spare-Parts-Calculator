@@ -39,12 +39,14 @@ export interface SavedState {
   showWorkshop?: boolean
   showOnlyProfitable?: boolean
 
-  // Market offers
-  marketOffers?: Array<{
+  // Market offers per part type (expires after 15 minutes)
+  partTypeMarketOffers?: Record<string, Array<{
     id: string
     quality: number
     price: number
-  }>
+    timestamp: number
+    link?: string
+  }>>
 
   lastSaved?: number
 }
@@ -119,18 +121,6 @@ export function useLocalStorage() {
     return value
   }
 
-  // Clear market offers (call when part type changes)
-  function clearMarketOffers() {
-    savedState.value.marketOffers = []
-    savedState.value.partTypeTimestamp = Date.now()
-    saveState(savedState.value)
-  }
-
-  // Check if market offers exist
-  function hasMarketOffers(): boolean {
-    return (savedState.value.marketOffers?.length ?? 0) > 0
-  }
-
   // Initialize
   savedState.value = loadState()
 
@@ -140,8 +130,6 @@ export function useLocalStorage() {
     loadState,
     saveState,
     clearState,
-    clearMarketOffers,
-    hasMarketOffers,
     createAutoSavedRef,
   }
 }

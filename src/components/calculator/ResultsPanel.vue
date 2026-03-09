@@ -161,14 +161,19 @@ watch([showOnlyProfitable, () => props.options], () => {
           <!-- Data Rows -->
           <tr
             v-for="(option, index) in paginatedOptions"
-            :key="`${option.quality}-${option.seriesId}`"
+            :key="`${option.quality}-${option.seriesId || 'market'}-${index}`"
             class="border-b border-dark-border hover:bg-dark-hover transition-colors"
           >
             <td class="px-2 py-2 text-gray-300 font-medium">
               #{{ (currentPage - 1) * itemsPerPage + index + 1 }}
             </td>
-            <td class="px-2 py-2 text-gray-300">
-              Workshop
+            <td class="px-2 py-2">
+              <span
+                class="inline-block px-2 py-0.5 rounded text-xs font-medium"
+                :class="option.seriesId ? 'bg-blue-600/20 text-blue-400' : 'bg-purple-600/20 text-purple-400'"
+              >
+                {{ option.seriesId ? 'Workshop' : 'Market' }}
+              </span>
             </td>
             <td class="px-2 py-2 text-center font-semibold text-gray-200">
               {{ option.quality }}%

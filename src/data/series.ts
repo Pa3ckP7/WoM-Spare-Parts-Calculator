@@ -58,12 +58,12 @@ export function getSeriesById(id: string): Series | undefined {
 // Get all part type options for UI
 export function getAllPartTypes(): Array<{ value: string; label: string }> {
   return [
-    { value: 'rare', label: 'Rare Parts (Q10-19)' },
-    { value: 'unique', label: 'Unique Parts (Q20-39)' },
-    { value: 'legendary', label: 'Legendary Parts (Q40-69)' },
+    { value: 'rare', label: 'Rare Parts (10-19%)' },
+    { value: 'unique', label: 'Unique Parts (20-39%)' },
+    { value: 'legendary', label: 'Legendary Parts (40-69%)' },
     ...SERIES.map(s => ({
       value: `perfect-${s.id}`,
-      label: `Perfect ${s.name} Parts (Q70-100)`,
+      label: `Perfect ${s.name} Parts (70-100%)`,
     })),
   ]
 }

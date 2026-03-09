@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PartTypeSelector from '@/components/calculator/PartTypeSelector.vue'
 import PriceInputPanel from '@/components/calculator/PriceInputPanel.vue'
+import MarketOfferInput from '@/components/calculator/MarketOfferInput.vue'
 import ResultsPanel from '@/components/calculator/ResultsPanel.vue'
 import Button from '@/components/ui/Button.vue'
 import { useCalculator } from '@/composables/useCalculator'
@@ -11,7 +12,11 @@ const {
   prices,
   partType,
   seriesId,
-  workshopOptions,
+  filteredEquipment,
+  marketOffers,
+  allOptions,
+  addMarketOffer,
+  removeMarketOffer,
   handleClearData,
   goToStep,
   nextStep,
@@ -43,8 +48,9 @@ const {
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
       <!-- Step Indicator -->
-      <div class="max-w-3xl mx-auto mb-8">
+      <div class="max-w-4xl mx-auto mb-8">
         <div class="flex items-center justify-center gap-2">
+          <!-- Step 1: Part Type -->
           <div class="flex items-center">
             <button
               @click="goToStep(1)"
@@ -57,7 +63,9 @@ const {
               Part Type
             </span>
           </div>
-          <div class="w-16 h-0.5" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-dark-border'" />
+          <div class="w-12 h-0.5" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-dark-border'" />
+
+          <!-- Step 2: Prices -->
           <div class="flex items-center">
             <button
               @click="partType && goToStep(2)"
@@ -74,7 +82,9 @@ const {
               Prices
             </span>
           </div>
-          <div class="w-16 h-0.5" :class="currentStep >= 3 ? 'bg-blue-600' : 'bg-dark-border'" />
+          <div class="w-12 h-0.5" :class="currentStep >= 3 ? 'bg-blue-600' : 'bg-dark-border'" />
+
+          <!-- Step 3: Market Offers -->
           <div class="flex items-center">
             <button
               @click="partType && prices.partPrice > 0 && goToStep(3)"
@@ -87,9 +97,28 @@ const {
             >
               3
             </button>
+            <span class="ml-2 text-sm font-medium" :class="currentStep >= 3 ? 'text-gray-300' : 'text-gray-500'">
+              Market
+            </span>
+          </div>
+          <div class="w-12 h-0.5" :class="currentStep >= 4 ? 'bg-blue-600' : 'bg-dark-border'" />
+
+          <!-- Step 4: Results -->
+          <div class="flex items-center">
+            <button
+              @click="partType && prices.partPrice > 0 && goToStep(4)"
+              :disabled="!partType || prices.partPrice <= 0"
+              class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all"
+              :class="[
+                currentStep >= 4 ? 'bg-blue-600' : 'bg-dark-border text-gray-500',
+                partType && prices.partPrice > 0 ? 'cursor-pointer hover:ring-2 hover:ring-blue-400' : 'cursor-not-allowed opacity-50'
+              ]"
+            >
+              4
+            </button>
             <span
               class="ml-2 text-sm font-medium"
-              :class="currentStep >= 3 ? 'text-gray-300' : 'text-gray-500'"
+              :class="currentStep >= 4 ? 'text-gray-300' : 'text-gray-500'"
             >
               Results
             </span>
@@ -100,8 +129,21 @@ const {
       <!-- Steps -->
       <div class="space-y-6">
         <!-- Step 1: Part Type Selector -->
-        <section v-if="currentStep === 1">
+        <section v-if="currentStep === 1" class="space-y-6">
+          <!-- Navigation buttons (top) -->
+          <div class="flex justify-end max-w-5xl mx-auto">
+            <Button
+              :disabled="!partTypeSelection"
+              @click="nextStep"
+              size="lg"
+            >
+              Continue
+            </Button>
+          </div>
+
           <PartTypeSelector v-model="partTypeSelection" />
+
+          <!-- Navigation buttons (bottom) -->
           <div class="flex justify-end mt-6 max-w-5xl mx-auto">
             <Button
               :disabled="!partTypeSelection"
@@ -114,13 +156,29 @@ const {
         </section>
 
         <!-- Step 2: Price Inputs -->
-        <section v-if="currentStep === 2">
+        <section v-if="currentStep === 2" class="space-y-6">
+          <!-- Navigation buttons (top) -->
+          <div class="flex justify-between max-w-4xl mx-auto">
+            <Button variant="secondary" @click="prevStep">
+              Back
+            </Button>
+            <Button
+              :disabled="!prices.partPrice || prices.partPrice <= 0"
+              @click="nextStep"
+              size="lg"
+            >
+              Continue
+            </Button>
+          </div>
+
           <PriceInputPanel
             :part-type="partType!"
             :series-id="seriesId"
             :prices="prices"
             @update:prices="prices = $event"
           />
+
+          <!-- Navigation buttons (bottom) -->
           <div class="flex justify-between mt-6 max-w-4xl mx-auto">
             <Button variant="secondary" @click="prevStep">
               Back
@@ -135,15 +193,61 @@ const {
           </div>
         </section>
 
-        <!-- Step 3: Results -->
-        <section v-if="currentStep === 3">
+        <!-- Step 3: Market Offers -->
+        <section v-if="currentStep === 3" class="space-y-6">
+          <!-- Navigation buttons (top) -->
+          <div class="flex justify-between max-w-6xl mx-auto">
+            <Button variant="secondary" @click="prevStep">
+              Back
+            </Button>
+            <Button
+              @click="nextStep"
+              size="lg"
+            >
+              Continue to Results
+            </Button>
+          </div>
+
+          <MarketOfferInput
+            :part-type="partType!"
+            :series-id="seriesId"
+            :part-price="prices.partPrice"
+            :filtered-equipment="filteredEquipment"
+            :market-offers="marketOffers"
+            @add-offer="addMarketOffer"
+            @remove-offer="removeMarketOffer"
+          />
+          <div class="flex justify-between mt-6 max-w-6xl mx-auto">
+            <Button variant="secondary" @click="prevStep">
+              Back
+            </Button>
+            <Button
+              @click="nextStep"
+              size="lg"
+            >
+              Continue to Results
+            </Button>
+          </div>
+        </section>
+
+        <!-- Step 4: Results -->
+        <section v-if="currentStep === 4" class="space-y-6">
+          <!-- Navigation buttons (top) -->
+          <div class="flex justify-start max-w-6xl mx-auto">
+            <Button variant="secondary" @click="prevStep">
+              Back
+            </Button>
+          </div>
+
           <ResultsPanel
-            :options="workshopOptions"
+            :options="allOptions"
             :part-price="prices.partPrice"
             :budget-cap="prices.budgetCap"
             :workshop-enabled="prices.workshopEnabled"
             @update:budget-cap="prices.budgetCap = $event"
           />
+
+          <!-- Navigation buttons (bottom) -->
           <div class="flex justify-start mt-6 max-w-6xl mx-auto">
             <Button variant="secondary" @click="prevStep">
               Back
