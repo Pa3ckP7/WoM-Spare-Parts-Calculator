@@ -7,6 +7,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Set base to '/' for custom domain, or '/repo-name/' for GitHub Pages
+  base: process.env.GITHUB_PAGES ? '/WoM-Spare-Parts-Calculator/' : '/',
   plugins: [
     vue(),
     vueDevTools(),
