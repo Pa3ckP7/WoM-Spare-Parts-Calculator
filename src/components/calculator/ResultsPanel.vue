@@ -74,9 +74,9 @@ const hiddenCount = computed(() => props.options.length - filteredOptions.value.
 
 // Calculate minimum height to prevent container shrinking and scroll jumping
 const minResultsHeight = computed(() => {
-  // Each row is approximately 38px (py-2 padding + text-sm content + border)
-  const rowHeight = 38
-  return itemsPerPage.value * rowHeight
+  // Don't enforce min-height on mobile to save space
+  // Only a small buffer to prevent layout shift
+  return 0
 })
 
 function goToPage(page: number) {
@@ -142,76 +142,102 @@ function onLeave(el: Element, done: () => void) {
     onComplete: done
   })
 }
+
+function handleRowClick(option: WorkshopCalculation) {
+  if (option.link) {
+    window.open(option.link, '_blank', 'noopener,noreferrer')
+  }
+}
 </script>
 
 
 <template>
   <Card title="Results" class="w-full max-w-4xl mx-auto">
     <!-- Filters -->
-    <div class="flex items-center gap-3 mb-4 flex-wrap">
-      <button
-        v-if="workshopEnabled"
-        @click="showWorkshop = !showWorkshop"
-        class="
-          px-4 py-2 rounded-lg border-2 transition-all duration-200
-          hover:border-blue-500 hover:scale-105 active:scale-95
-          focus:outline-none focus:ring-2 focus:ring-blue-500
-        "
-        :class="
-          showWorkshop
-            ? 'border-blue-500 bg-blue-600/10 text-blue-400 shadow-md'
-            : 'border-dark-border bg-dark-card text-gray-400'
-        "
-      >
-        Show workshop
-      </button>
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          v-if="workshopEnabled"
+          @click="showWorkshop = !showWorkshop"
+          class="
+            px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border-2 transition-all duration-200 text-xs sm:text-sm
+            hover:border-blue-500 hover:scale-105 active:scale-95
+            focus:outline-none focus:ring-2 focus:ring-blue-500
+          "
+          :class="
+            showWorkshop
+              ? 'border-blue-500 bg-blue-600/10 text-blue-400 shadow-md'
+              : 'border-dark-border bg-dark-card text-gray-400'
+          "
+        >
+          Show workshop
+        </button>
 
-      <button
-        @click="showOnlyProfitable = !showOnlyProfitable"
-        class="
-          px-4 py-2 rounded-lg border-2 transition-all duration-200
-          hover:border-blue-500 hover:scale-105 active:scale-95
-          focus:outline-none focus:ring-2 focus:ring-blue-500
-        "
-        :class="
-          showOnlyProfitable
-            ? 'border-blue-500 bg-blue-600/10 text-blue-400 shadow-md'
-            : 'border-dark-border bg-dark-card text-gray-400'
-        "
-      >
-        Only profitable
-      </button>
+        <button
+          @click="showOnlyProfitable = !showOnlyProfitable"
+          class="
+            px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border-2 transition-all duration-200 text-xs sm:text-sm
+            hover:border-blue-500 hover:scale-105 active:scale-95
+            focus:outline-none focus:ring-2 focus:ring-blue-500
+          "
+          :class="
+            showOnlyProfitable
+              ? 'border-blue-500 bg-blue-600/10 text-blue-400 shadow-md'
+              : 'border-dark-border bg-dark-card text-gray-400'
+          "
+        >
+          Only profitable
+        </button>
+      </div>
 
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-medium text-gray-200">Price cap</label>
+      <div class="flex items-center gap-2 flex-1 sm:flex-initial">
+        <label class="text-xs sm:text-sm font-medium text-gray-200 whitespace-nowrap">Price cap</label>
         <InfoTooltip text="Filter out options that cost more than this amount. Useful if you have a limited budget." />
         <Input
           v-model="priceCap"
           type="number"
           :min="0"
           placeholder="No limit"
-          class="w-40"
+          class="w-full sm:w-40"
         />
       </div>
 
-      <span v-if="hiddenCount > 0" class="text-sm text-gray-400 ml-auto">
+      <span v-if="hiddenCount > 0" class="text-xs sm:text-sm text-gray-400 sm:ml-auto">
         {{ hiddenCount }} options hidden
       </span>
     </div>
 
     <!-- Options Grid (styled as table) -->
-    <div class="border border-dark-border rounded-md overflow-x-auto w-fit mx-auto">
+    <div class="border border-dark-border rounded-md overflow-hidden">
       <div>
         <!-- Header -->
-        <div class="grid grid-cols-[70px_100px_80px_70px_70px_130px_130px_130px] bg-dark-hover border-b border-dark-border text-sm">
-          <div class="px-2 py-2 text-left font-semibold text-gray-200">Rank</div>
-          <div class="px-2 py-2 text-left font-semibold text-gray-200">Source</div>
-          <div class="px-2 py-2 text-center font-semibold text-gray-200">Quality</div>
-          <div class="px-2 py-2 text-center font-semibold text-gray-200">Series</div>
-          <div class="px-2 py-2 text-right font-semibold text-gray-200">Parts</div>
-          <div class="px-2 py-2 text-right font-semibold text-gray-200">Total Cost</div>
-          <div class="px-2 py-2 text-right font-semibold text-gray-200">Cost/Part</div>
-          <div class="px-2 py-2 text-right font-semibold text-gray-200">Savings/Part</div>
+        <div class="grid grid-cols-[0.4fr_0.7fr_0.5fr_0.4fr_0.4fr_0.8fr_0.8fr_0.9fr] bg-dark-hover border-b border-dark-border text-[10px] sm:text-xs md:text-sm">
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-left font-semibold text-gray-200">
+            <span class="hidden sm:inline">Rank</span>
+            <span class="sm:hidden">#</span>
+          </div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-left font-semibold text-gray-200">Source</div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-center font-semibold text-gray-200">
+            <span class="hidden sm:inline">Quality</span>
+            <span class="sm:hidden">Qlty</span>
+          </div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-center font-semibold text-gray-200">
+            <span class="hidden sm:inline">Series</span>
+            <span class="sm:hidden">Ser</span>
+          </div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right font-semibold text-gray-200">
+            <span class="hidden sm:inline">Parts</span>
+            <span class="sm:hidden">Pts</span>
+          </div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right font-semibold text-gray-200">
+            <span class="hidden sm:inline">Total Cost</span>
+            <span class="sm:hidden">Total</span>
+          </div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right font-semibold text-gray-200">Cost/Part</div>
+          <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right font-semibold text-gray-200">
+            <span class="hidden sm:inline">Savings/Part</span>
+            <span class="sm:hidden">Save/P</span>
+          </div>
         </div>
 
         <!-- Data Rows -->
@@ -233,39 +259,42 @@ function onLeave(el: Element, done: () => void) {
             v-for="(option, index) in paginatedOptions"
             :key="`${option.seriesId || 'market'}-${option.quality}-${option.totalCost}`"
             :data-index="index"
-            class="grid grid-cols-[70px_100px_80px_70px_70px_130px_130px_130px] border-b border-dark-border hover:bg-dark-hover transition-colors text-sm"
+            class="grid grid-cols-[0.4fr_0.7fr_0.5fr_0.4fr_0.4fr_0.8fr_0.8fr_0.9fr] border-b border-dark-border hover:bg-dark-hover transition-colors text-[10px] sm:text-xs md:text-sm"
+            :class="option.link ? 'cursor-pointer' : ''"
+            @click="handleRowClick(option)"
           >
-            <div class="px-2 py-2 text-gray-300 font-medium">
-              #{{ (currentPage - 1) * itemsPerPage + index + 1 }}
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-gray-300 font-medium">
+              <span class="hidden sm:inline">#</span>{{ (currentPage - 1) * itemsPerPage + index + 1 }}
             </div>
-            <div class="px-2 py-2">
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2">
               <span
-                class="inline-block px-2 py-0.5 rounded text-xs font-medium"
+                class="inline-block px-1 py-0.5 sm:px-1.5 md:px-2 rounded text-[9px] sm:text-[10px] md:text-xs font-medium"
                 :class="option.seriesId ? 'bg-blue-600/20 text-blue-400' : 'bg-purple-600/20 text-purple-400'"
               >
-                {{ option.seriesId ? 'Workshop' : 'Market' }}
+                <span class="hidden sm:inline">{{ option.seriesId ? 'Workshop' : 'Market' }}</span>
+                <span class="sm:hidden">{{ option.seriesId ? 'Work' : 'Mrkt' }}</span>
               </span>
             </div>
-            <div class="px-2 py-2 text-center font-semibold text-gray-200">
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-center font-semibold text-gray-200">
               {{ option.quality }}%
             </div>
-            <div class="px-2 py-2 text-center text-gray-300 font-medium">
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-center text-gray-300 font-medium">
               {{ option.seriesId || '-' }}
             </div>
-            <div class="px-2 py-2 text-right text-gray-300">
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right text-gray-300">
               {{ option.disassembly }}
             </div>
-            <div class="px-2 py-2 text-right text-gray-300">
-              {{ formatNumber(option.totalCost) }}
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right text-gray-300">
+              {{ formatNumber(option.totalCost) }} MC
             </div>
-            <div class="px-2 py-2 text-right text-blue-400 font-bold">
-              {{ formatNumber(option.costPerPart) }}
+            <div class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right text-blue-400 font-bold">
+              {{ formatNumber(option.costPerPart) }} MC
             </div>
             <div
-              class="px-2 py-2 text-right font-medium"
+              class="px-0.5 py-1 sm:px-1 sm:py-1.5 md:px-2 md:py-2 text-right font-medium"
               :class="option.savingsPerPart > 0 ? 'text-green-400' : 'text-red-400'"
             >
-              {{ option.savingsPerPart > 0 ? '-' : '+' }}{{ formatNumber(Math.abs(option.savingsPerPart)) }}
+              {{ option.savingsPerPart > 0 ? '-' : '+' }}{{ formatNumber(Math.abs(option.savingsPerPart)) }} MC
             </div>
           </div>
         </TransitionGroup>
@@ -273,21 +302,21 @@ function onLeave(el: Element, done: () => void) {
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex items-center justify-between mt-4">
-        <div class="text-sm text-gray-400">
-          Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredOptions.length) }} of {{ filteredOptions.length }} options
+    <div v-if="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0 mt-3 sm:mt-4">
+        <div class="text-xs sm:text-sm text-gray-400 text-center sm:text-left">
+          Showing {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, filteredOptions.length) }} of {{ filteredOptions.length }}
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 sm:gap-2">
           <button
             @click="goToPage(currentPage - 1)"
             :disabled="currentPage === 1"
             class="
-              px-3 py-1 rounded border border-dark-border bg-dark-card
+              px-2 py-1 sm:px-3 rounded border border-dark-border bg-dark-card text-xs sm:text-sm
               text-gray-200 hover:bg-dark-hover transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
-            Previous
+            Prev
           </button>
           <div class="flex gap-1">
             <button
@@ -295,7 +324,7 @@ function onLeave(el: Element, done: () => void) {
               :key="page"
               @click="goToPage(page)"
               class="
-                px-3 py-1 rounded border transition-colors
+                px-2 py-1 sm:px-3 rounded border transition-colors text-xs sm:text-sm min-w-[28px] sm:min-w-[32px]
               "
               :class="
                 page === currentPage
@@ -310,7 +339,7 @@ function onLeave(el: Element, done: () => void) {
             @click="goToPage(currentPage + 1)"
             :disabled="currentPage === totalPages"
             class="
-              px-3 py-1 rounded border border-dark-border bg-dark-card
+              px-2 py-1 sm:px-3 rounded border border-dark-border bg-dark-card text-xs sm:text-sm
               text-gray-200 hover:bg-dark-hover transition-colors
               disabled:opacity-50 disabled:cursor-not-allowed
             "

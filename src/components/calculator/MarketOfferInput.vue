@@ -10,6 +10,7 @@ import BreakEvenTable from './BreakEvenTable.vue'
 import type { MarketOffer, PartType, EquipmentQuality } from '@/types/calculator'
 import { getQualityRangeForPartType } from '@/data/series'
 import { EQUIPMENT_DATA } from '@/data/equipment'
+import { formatNumber } from '@/utils/calculations'
 
 interface Props {
   partType: PartType
@@ -37,9 +38,40 @@ const qualityRange = computed(() => {
   return getQualityRangeForPartType(props.partType, props.seriesId)
 })
 
+// Validation errors
+const qualityError = computed(() => {
+  if (quality.value === undefined || quality.value === null) return ''
+  if (quality.value < qualityRange.value.min || quality.value > qualityRange.value.max) {
+    return `Quality must be between ${qualityRange.value.min}% and ${qualityRange.value.max}%`
+  }
+  return ''
+})
+
+const priceError = computed(() => {
+  if (!price.value) return ''
+  if (price.value <= 0) {
+    return 'Price must be greater than 0'
+  }
+  return ''
+})
+
+const linkError = computed(() => {
+  if (!link.value || !link.value.trim()) return ''
+  try {
+    new URL(link.value)
+    return ''
+  } catch {
+    return 'Please enter a valid URL'
+  }
+})
+
 // Check if form is valid
 const isValid = computed(() => {
-  return quality.value !== undefined && price.value > 0
+  return quality.value !== undefined &&
+         price.value > 0 &&
+         !qualityError.value &&
+         !priceError.value &&
+         !linkError.value
 })
 
 // Get disassembly yield for selected quality
@@ -152,9 +184,9 @@ function onLeave(el: Element, done: () => void) {
 
 <template>
   <div class="w-full max-w-6xl mx-auto">
-    <div class="flex flex-row gap-6">
+    <div class="flex flex-col lg:flex-row gap-4 sm:gap-6">
       <!-- Left: Break-Even Price Guide -->
-      <div class="w-[280px] flex-shrink-0">
+      <div class="w-full lg:w-[280px] flex-shrink-0">
         <BreakEvenTable
           :part-type="partType"
           :series-id="seriesId"
@@ -168,35 +200,47 @@ function onLeave(el: Element, done: () => void) {
         <Card title="Add Market Offers">
         <div class="space-y-6">
       <!-- Add Offer Form -->
-      <div class="border border-dark-border rounded-lg p-4 bg-dark-bg/50">
-        <h3 class="text-sm font-semibold text-gray-200 mb-4">Add Market Offer</h3>
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              v-model="quality"
-              type="number"
-              :min="qualityRange.min"
-              :max="qualityRange.max"
-              label="Quality Level (%)"
-              placeholder="0"
-              :hint="`Valid range: ${qualityRange.min}-${qualityRange.max}%`"
-            />
-            <Input
-              v-model="price"
-              type="number"
-              :min="0"
-              label="Price"
-              placeholder="0"
-              hint="Total price in minecoins"
-            />
+      <div class="border border-dark-border rounded-lg p-3 sm:p-4 bg-dark-bg/50">
+        <h3 class="text-xs sm:text-sm font-semibold text-gray-200 mb-3 sm:mb-4">Add Market Offer</h3>
+        <div class="space-y-3 sm:space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div>
+              <Input
+                v-model="quality"
+                type="number"
+                :min="qualityRange.min"
+                :max="qualityRange.max"
+                label="Quality Level (%)"
+                placeholder="0"
+                :hint="qualityError || `Valid range: ${qualityRange.min}-${qualityRange.max}%`"
+                :class="qualityError ? 'border-red-500' : ''"
+              />
+              <p v-if="qualityError" class="text-red-400 text-xs mt-1">{{ qualityError }}</p>
+            </div>
+            <div>
+              <Input
+                v-model="price"
+                type="number"
+                :min="0"
+                label="Price"
+                placeholder="0"
+                :hint="priceError || 'Total price in minecoins'"
+                :class="priceError ? 'border-red-500' : ''"
+              />
+              <p v-if="priceError" class="text-red-400 text-xs mt-1">{{ priceError }}</p>
+            </div>
           </div>
-          <Input
-            v-model="link"
-            type="text"
-            label="Trade Link (optional)"
-            placeholder="https://minesweeper.online/trade/XXXXXXX"
-            hint="Optional link to the trade offer"
-          />
+          <div>
+            <Input
+              v-model="link"
+              type="text"
+              label="Trade Link (optional)"
+              placeholder="https://minesweeper.online/trade/XXXXXXX"
+              :hint="linkError || 'Optional link to the trade offer'"
+              :class="linkError ? 'border-red-500' : ''"
+            />
+            <p v-if="linkError" class="text-red-400 text-xs mt-1">{{ linkError }}</p>
+          </div>
         </div>
 
         <!-- Add Button -->
@@ -212,15 +256,15 @@ function onLeave(el: Element, done: () => void) {
       </div>
 
       <!-- Offers List -->
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
+      <div class="space-y-2 sm:space-y-3">
+        <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <h3 class="text-sm font-semibold text-gray-200">
+            <h3 class="text-xs sm:text-sm font-semibold text-gray-200">
               Current Offers ({{ marketOffers.length }})
             </h3>
             <InfoTooltip text="Market offers expire after 15 minutes. The timer shows remaining time before automatic removal." />
           </div>
-          <Button v-if="marketOffers.length > 0" variant="danger" size="sm" @click="handleClearAll">
+          <Button v-if="marketOffers.length > 0" variant="danger" size="sm" @click="handleClearAll" class="text-xs">
             Clear All
           </Button>
         </div>
@@ -228,13 +272,13 @@ function onLeave(el: Element, done: () => void) {
         <!-- Offers Grid (styled as table) -->
         <div class="border border-dark-border rounded-md overflow-hidden">
           <!-- Header -->
-          <div v-if="marketOffers.length > 0" class="grid grid-cols-[1.2fr_1fr_0.8fr_2fr_1.5fr_1.3fr] bg-dark-hover border-b border-dark-border text-sm">
-            <div class="px-2 py-2 text-left font-semibold text-gray-200">Source</div>
-            <div class="px-2 py-2 text-center font-semibold text-gray-200">Quality</div>
-            <div class="px-2 py-2 text-right font-semibold text-gray-200">Parts</div>
-            <div class="px-2 py-2 text-right font-semibold text-gray-200">Price</div>
-            <div class="px-2 py-2 text-center font-semibold text-gray-200">Link</div>
-            <div class="px-2 py-2 text-center font-semibold text-gray-200">Action</div>
+          <div v-if="marketOffers.length > 0" class="grid grid-cols-[1.2fr_1fr_0.8fr_2fr_1.5fr_1.3fr] bg-dark-hover border-b border-dark-border text-xs sm:text-sm">
+            <div class="px-1 py-1 sm:px-2 sm:py-2 text-left font-semibold text-gray-200">Source</div>
+            <div class="px-1 py-1 sm:px-2 sm:py-2 text-center font-semibold text-gray-200">Quality</div>
+            <div class="px-1 py-1 sm:px-2 sm:py-2 text-right font-semibold text-gray-200">Parts</div>
+            <div class="px-1 py-1 sm:px-2 sm:py-2 text-right font-semibold text-gray-200">Price</div>
+            <div class="px-1 py-1 sm:px-2 sm:py-2 text-center font-semibold text-gray-200">Link</div>
+            <div class="px-1 py-1 sm:px-2 sm:py-2 text-center font-semibold text-gray-200">Action</div>
           </div>
 
           <!-- Data Rows (Scrollable) -->
@@ -257,37 +301,38 @@ function onLeave(el: Element, done: () => void) {
                 v-for="(offer, index) in marketOffers"
                 :key="offer.id"
                 :data-index="index"
-                class="grid grid-cols-[1.2fr_1fr_0.8fr_2fr_1.5fr_1.3fr] border-b border-dark-border hover:bg-dark-hover transition-colors text-sm"
+                class="grid grid-cols-[1.2fr_1fr_0.8fr_2fr_1.5fr_1.3fr] border-b border-dark-border hover:bg-dark-hover transition-colors text-xs sm:text-sm"
               >
-                <div class="px-2 py-2">
-                  <Badge variant="info">Market</Badge>
+                <div class="px-1 py-1 sm:px-2 sm:py-2">
+                  <Badge variant="info" class="text-[10px] sm:text-xs">Market</Badge>
                 </div>
-                <div class="px-2 py-2 text-center font-semibold text-gray-200">
+                <div class="px-1 py-1 sm:px-2 sm:py-2 text-center font-semibold text-gray-200">
                   {{ offer.quality }}%
                 </div>
-                <div class="px-2 py-2 text-right text-blue-400">
+                <div class="px-1 py-1 sm:px-2 sm:py-2 text-right text-blue-400">
                   {{ getDisassembly(offer.quality) }}
                 </div>
-                <div class="px-2 py-2 text-right text-gray-300">
-                  {{ offer.price.toLocaleString() }} MC
+                <div class="px-1 py-1 sm:px-2 sm:py-2 text-right text-gray-300">
+                  {{ formatNumber(offer.price) }} MC
                 </div>
-                <div class="px-2 py-2 text-center">
+                <div class="px-1 py-1 sm:px-2 sm:py-2 text-center">
                   <a
                     v-if="offer.link"
                     :href="offer.link"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-blue-400 hover:text-blue-300 underline"
+                    class="text-blue-400 hover:text-blue-300 underline text-[10px] sm:text-xs"
                   >
                     View
                   </a>
-                  <span v-else class="text-gray-500">-</span>
+                  <span v-else class="text-gray-500 text-[10px] sm:text-xs">-</span>
                 </div>
-                <div class="px-2 py-2 text-center">
+                <div class="px-1 py-1 sm:px-2 sm:py-2 text-center">
                   <Button
                     variant="secondary"
                     size="sm"
                     @click="handleRemove(offer.id)"
+                    class="text-[10px] sm:text-xs px-2 py-1"
                   >
                     Remove
                   </Button>

@@ -30,6 +30,8 @@ export interface WorkshopCalculation {
   totalSavings: number
   /** Workshop cost as percentage of direct purchase cost */
   percentOfDirect: number
+  /** Optional link to market offer (for market offers only) */
+  link?: string
 }
 
 /**
@@ -244,13 +246,15 @@ export function formatNumber(num: number): string {
  * @param price - Market price for the equipment
  * @param partPrice - Current market price for spare parts
  * @param equipmentData - Equipment data to look up disassembly yield
+ * @param link - Optional link to the market offer
  * @returns Market calculation with cost breakdown, or null if quality not found
  */
 export function calculateMarketOffer(
   quality: number,
   price: number,
   partPrice: number,
-  equipmentData: EquipmentQuality[]
+  equipmentData: EquipmentQuality[],
+  link?: string
 ): WorkshopCalculation | null {
   // Find equipment data for this quality
   const equipment = equipmentData.find(eq => eq.quality === quality)
@@ -276,6 +280,7 @@ export function calculateMarketOffer(
     savingsPerPart,
     totalSavings,
     percentOfDirect,
+    link,
   }
 }
 
@@ -290,13 +295,13 @@ export function calculateMarketOffer(
  */
 export function mergeAndSortOptions(
   workshopOptions: WorkshopCalculation[],
-  marketOffers: Array<{ id: string; quality: number; price: number }>,
+  marketOffers: Array<{ id: string; quality: number; price: number; link?: string }>,
   partPrice: number,
   equipmentData: EquipmentQuality[]
 ): WorkshopCalculation[] {
   // Calculate market offer options
   const marketCalculations = marketOffers
-    .map(offer => calculateMarketOffer(offer.quality, offer.price, partPrice, equipmentData))
+    .map(offer => calculateMarketOffer(offer.quality, offer.price, partPrice, equipmentData, offer.link))
     .filter((calc): calc is WorkshopCalculation => calc !== null)
 
   // Combine both arrays

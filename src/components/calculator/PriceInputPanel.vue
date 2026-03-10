@@ -222,9 +222,9 @@ watch(() => props.prices, async (newPrices) => {
         <!-- Non-Perfect Parts: All 10 gems/metals -->
         <div v-else-if="!isPerfectType" class="space-y-4">
           <!-- Gem Prices -->
-          <div class="border border-dark-border rounded-md p-4">
-            <h3 class="font-medium text-gray-200 mb-4">Gem Prices</h3>
-            <div class="grid grid-cols-2 gap-4">
+          <div class="border border-dark-border rounded-md p-3 sm:p-4">
+            <h3 class="font-medium text-sm sm:text-base text-gray-200 mb-3 sm:mb-4">Gem Prices</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Input v-model="gemPrices.ruby" type="number" :min="0" label="Ruby" placeholder="0" />
               <Input v-model="gemPrices.sapphire" type="number" :min="0" label="Sapphire" placeholder="0" />
               <Input v-model="gemPrices.topaz" type="number" :min="0" label="Topaz" placeholder="0" />
@@ -239,9 +239,9 @@ watch(() => props.prices, async (newPrices) => {
           </div>
 
           <!-- Metal Prices -->
-          <div class="border border-dark-border rounded-md p-4">
-            <h3 class="font-medium text-gray-200 mb-4">Metal Prices</h3>
-            <div class="grid grid-cols-2 gap-4">
+          <div class="border border-dark-border rounded-md p-3 sm:p-4">
+            <h3 class="font-medium text-sm sm:text-base text-gray-200 mb-3 sm:mb-4">Metal Prices</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Input v-model="metalPrices.copper" type="number" :min="0" label="Copper" placeholder="0" />
               <Input v-model="metalPrices.silver" type="number" :min="0" label="Silver" placeholder="0" />
               <Input v-model="metalPrices.gold" type="number" :min="0" label="Gold" placeholder="0" />

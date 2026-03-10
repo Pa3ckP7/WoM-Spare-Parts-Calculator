@@ -28,14 +28,14 @@ function handleChange(value: string) {
     <div class="space-y-6">
       <!-- Base Part Types -->
       <div>
-        <h3 class="text-sm font-semibold text-gray-300 mb-3">Standard Parts</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <h3 class="text-xs sm:text-sm font-semibold text-gray-300 mb-2 sm:mb-3">Standard Parts</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-3">
           <button
             v-for="option in baseTypes"
             :key="option.value"
             @click="handleChange(option.value)"
             class="
-              p-4 rounded-lg border-2 text-left transition-all
+              p-3 sm:p-4 rounded-lg border-2 text-left transition-all
               hover:border-blue-500 hover:bg-dark-hover
               focus:outline-none focus:ring-2 focus:ring-blue-500
             "
@@ -45,22 +45,22 @@ function handleChange(value: string) {
                 : 'border-dark-border bg-dark-card'
             "
           >
-            <div class="font-semibold text-gray-200">{{ option.label.split(' (')[0] }}</div>
-            <div class="text-xs text-gray-400 mt-1">{{ option.label.match(/\(([^)]+)\)/)?.[1] }}</div>
+            <div class="font-semibold text-sm sm:text-base text-gray-200">{{ option.label.split(' (')[0] }}</div>
+            <div class="text-xs text-gray-400 mt-0.5 sm:mt-1">{{ option.label.match(/\(([^)]+)\)/)?.[1] }}</div>
           </button>
         </div>
       </div>
 
       <!-- Perfect Part Types -->
       <div>
-        <h3 class="text-sm font-semibold text-gray-300 mb-3">Perfect Parts</h3>
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <h3 class="text-xs sm:text-sm font-semibold text-gray-300 mb-2 sm:mb-3">Perfect Parts</h3>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3">
           <button
             v-for="option in perfectTypes"
             :key="option.value"
             @click="handleChange(option.value)"
             class="
-              p-4 rounded-lg border-2 text-left transition-all
+              p-3 sm:p-4 rounded-lg border-2 text-left transition-all
               hover:border-blue-500 hover:bg-dark-hover
               focus:outline-none focus:ring-2 focus:ring-blue-500
             "
@@ -70,8 +70,8 @@ function handleChange(value: string) {
                 : 'border-dark-border bg-dark-card'
             "
           >
-            <div class="font-semibold text-gray-200">{{ option.label.split(' Parts')[0].replace('Perfect ', '') }}</div>
-            <div class="text-xs text-gray-400 mt-1">{{ option.label.match(/\(([^)]+)\)/)?.[1] }}</div>
+            <div class="font-semibold text-sm sm:text-base text-gray-200">{{ option.label.split(' Parts')[0].replace('Perfect ', '') }}</div>
+            <div class="text-xs text-gray-400 mt-0.5 sm:mt-1">{{ option.label.match(/\(([^)]+)\)/)?.[1] }}</div>
           </button>
         </div>
       </div>

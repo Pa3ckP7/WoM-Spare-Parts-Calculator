@@ -30,12 +30,12 @@ const {
   <div class="min-h-screen bg-dark-bg text-gray-100">
     <!-- Header -->
     <header class="bg-dark-card border-b border-dark-border">
-      <div class="container mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold">Spare Parts Calculator</h1>
-            <p class="text-sm text-gray-400 mt-1">
-              Optimize equipment disassembly for
+      <div class="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0 flex-1">
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold truncate">Spare Parts Calculator</h1>
+            <p class="text-xs sm:text-sm text-gray-400 mt-0.5 sm:mt-1">
+              Optimize equipment for
               <a
                 href="https://minesweeper.online"
                 target="_blank"
@@ -46,11 +46,11 @@ const {
               </a>
             </p>
           </div>
-          <div class="flex items-center gap-4">
-            <span v-if="lastSaved" class="text-xs text-gray-400 hidden sm:block">
+          <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <span v-if="lastSaved" class="text-xs text-gray-400 hidden lg:block">
               Last saved: {{ Math.round((Date.now() - lastSaved.getTime()) / 1000) }}s ago
             </span>
-            <Button variant="secondary" size="sm" @click="handleClearData">
+            <Button variant="secondary" size="sm" @click="handleClearData" class="text-xs sm:text-sm">
               Clear Data
             </Button>
           </div>
@@ -59,83 +59,94 @@ const {
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <!-- Step Indicator -->
-      <div class="max-w-4xl mx-auto mb-8">
-        <div class="flex items-center justify-center gap-2">
+      <div class="max-w-4xl mx-auto mb-4 sm:mb-8">
+        <div class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm">
           <!-- Step 1: Part Type -->
-          <div class="flex items-center">
-            <button
-              @click="goToStep(1)"
-              class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-blue-400 hover:scale-110 active:scale-95"
+          <button
+            @click="goToStep(1)"
+            class="flex items-center cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 group"
+          >
+            <div
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 group-hover:ring-2 group-hover:ring-blue-400 flex-shrink-0"
               :class="currentStep >= 1 ? 'bg-blue-600 shadow-lg' : 'bg-dark-border text-gray-500'"
             >
               1
-            </button>
-            <span class="ml-2 text-sm font-medium" :class="currentStep >= 1 ? 'text-gray-300' : 'text-gray-500'">
+            </div>
+            <span class="ml-1 sm:ml-2 font-medium hidden sm:inline transition-colors" :class="currentStep >= 1 ? 'text-gray-300 group-hover:text-white' : 'text-gray-500 group-hover:text-gray-400'">
               Part Type
             </span>
-          </div>
-          <div class="w-12 h-0.5 transition-colors duration-500" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-dark-border'" />
+          </button>
+          <div class="w-6 sm:w-12 h-0.5 transition-colors duration-500 flex-shrink-0" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-dark-border'" />
 
           <!-- Step 2: Prices -->
-          <div class="flex items-center">
-            <button
-              @click="partType && goToStep(2)"
-              :disabled="!partType"
-              class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+          <button
+            @click="partType && goToStep(2)"
+            :disabled="!partType"
+            class="flex items-center transition-all duration-300 group"
+            :class="partType ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-50'"
+          >
+            <div
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 flex-shrink-0"
               :class="[
                 currentStep >= 2 ? 'bg-blue-600 shadow-lg' : 'bg-dark-border text-gray-500',
-                partType ? 'cursor-pointer hover:ring-2 hover:ring-blue-400 hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-50'
+                partType ? 'group-hover:ring-2 group-hover:ring-blue-400' : ''
               ]"
             >
               2
-            </button>
-            <span class="ml-2 text-sm font-medium" :class="currentStep >= 2 ? 'text-gray-300' : 'text-gray-500'">
+            </div>
+            <span class="ml-1 sm:ml-2 font-medium hidden sm:inline transition-colors" :class="currentStep >= 2 ? 'text-gray-300 group-hover:text-white' : 'text-gray-500 group-hover:text-gray-400'">
               Prices
             </span>
-          </div>
-          <div class="w-12 h-0.5 transition-colors duration-500" :class="currentStep >= 3 ? 'bg-blue-600' : 'bg-dark-border'" />
+          </button>
+          <div class="w-6 sm:w-12 h-0.5 transition-colors duration-500 flex-shrink-0" :class="currentStep >= 3 ? 'bg-blue-600' : 'bg-dark-border'" />
 
           <!-- Step 3: Market Offers -->
-          <div class="flex items-center">
-            <button
-              @click="partType && prices.partPrice > 0 && goToStep(3)"
-              :disabled="!partType || prices.partPrice <= 0"
-              class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+          <button
+            @click="partType && prices.partPrice > 0 && goToStep(3)"
+            :disabled="!partType || prices.partPrice <= 0"
+            class="flex items-center transition-all duration-300 group"
+            :class="partType && prices.partPrice > 0 ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-50'"
+          >
+            <div
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 flex-shrink-0"
               :class="[
                 currentStep >= 3 ? 'bg-blue-600 shadow-lg' : 'bg-dark-border text-gray-500',
-                partType && prices.partPrice > 0 ? 'cursor-pointer hover:ring-2 hover:ring-blue-400 hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-50'
+                partType && prices.partPrice > 0 ? 'group-hover:ring-2 group-hover:ring-blue-400' : ''
               ]"
             >
               3
-            </button>
-            <span class="ml-2 text-sm font-medium" :class="currentStep >= 3 ? 'text-gray-300' : 'text-gray-500'">
+            </div>
+            <span class="ml-1 sm:ml-2 font-medium hidden sm:inline transition-colors" :class="currentStep >= 3 ? 'text-gray-300 group-hover:text-white' : 'text-gray-500 group-hover:text-gray-400'">
               Market
             </span>
-          </div>
-          <div class="w-12 h-0.5 transition-colors duration-500" :class="currentStep >= 4 ? 'bg-blue-600' : 'bg-dark-border'" />
+          </button>
+          <div class="w-6 sm:w-12 h-0.5 transition-colors duration-500 flex-shrink-0" :class="currentStep >= 4 ? 'bg-blue-600' : 'bg-dark-border'" />
 
           <!-- Step 4: Results -->
-          <div class="flex items-center">
-            <button
-              @click="partType && prices.partPrice > 0 && goToStep(4)"
-              :disabled="!partType || prices.partPrice <= 0"
-              class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300"
+          <button
+            @click="partType && prices.partPrice > 0 && goToStep(4)"
+            :disabled="!partType || prices.partPrice <= 0"
+            class="flex items-center transition-all duration-300 group"
+            :class="partType && prices.partPrice > 0 ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-50'"
+          >
+            <div
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 flex-shrink-0"
               :class="[
                 currentStep >= 4 ? 'bg-blue-600 shadow-lg' : 'bg-dark-border text-gray-500',
-                partType && prices.partPrice > 0 ? 'cursor-pointer hover:ring-2 hover:ring-blue-400 hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-50'
+                partType && prices.partPrice > 0 ? 'group-hover:ring-2 group-hover:ring-blue-400' : ''
               ]"
             >
               4
-            </button>
+            </div>
             <span
-              class="ml-2 text-sm font-medium"
-              :class="currentStep >= 4 ? 'text-gray-300' : 'text-gray-500'"
+              class="ml-1 sm:ml-2 font-medium hidden sm:inline transition-colors"
+              :class="currentStep >= 4 ? 'text-gray-300 group-hover:text-white' : 'text-gray-500 group-hover:text-gray-400'"
             >
               Results
             </span>
-          </div>
+          </button>
         </div>
       </div>
 
